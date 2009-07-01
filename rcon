@@ -1,5 +1,31 @@
 #!/usr/bin/perl
 
+# This is somewhat specific to Cyclades console servers, but could be
+# easily adapted to other console servers that let you access a
+# specific port directly via telnet or ssh.
+#
+# The basic problem is that when you need to have some way of tracking
+# which servers are on what port of what console server.  Perhaps
+# with a single console server you can store that information in the
+# console server itself, but that starts becoming a real problem once
+# you have two or three or 30.
+#
+# This script is part of a simple solution to that problem.  The idea
+# is that you place the location information into DNS SRV records.
+# This script then takes the name of a host you want to look up and
+# looks up the appropriate SRV record.  It will then exec ssh with the
+# appropriate arguments to connect you to that console server.
+#
+# The script expects the SRV records to be _console._tcp.<hostname>
+# where hostname is the name of the server you want to connect to.  It
+# expects the server listed in the SRV record to be the name or IP of
+# the console server, and the port should be the logical port on the
+# cyclades.
+#
+# This is written in very basic perl so that it should work on fairly
+# old versions of perl.  It does require that dig be installed, but
+# you have to do the DNS lookups somehow.
+
 use strict;
 use warnings;
 
