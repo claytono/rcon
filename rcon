@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+if (@ARGV != 1) {
+  die "Usage: rcon [user@]<hostname>\n"
+}
+
+my ($user, $host) = split('@', $ARGV[0]);
+($user, $host) = ($ENV{USER}, $user) unless defined $host;
+
+my $answer=`dig -t SRV _console._tcp.$host +short +search`;
+chomp($answer);
+
+die "No console SRV record found for $host\n" if $answer eq "";
+
+my ($priority, $weight, $port, $server, @rest) = split(/\s+/, $answer);
+$server =~ s/\.$//;
+
+
+my $cmd = "ssh $user:$port\@$server";
+print "connecting to console for $host as $user\n";
+print "exec: $cmd\n";
+exec $cmd;
