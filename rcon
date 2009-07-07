@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # This is somewhat specific to Cyclades console servers, but could be
 # easily adapted to other console servers that let you access a
