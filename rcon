@@ -29,6 +29,15 @@
 use strict;
 use warnings;
 
+sub dns_lookup {
+  my ($rec_type, $name) = @_;
+  my $answer=`dig -t $rec_type $name +short +search`;
+  chomp($answer);
+
+  return if $answer eq "";
+  return $answer;
+}
+
 if (@ARGV != 1) {
   die "Usage: rcon [user@]<hostname>\n"
 }
@@ -36,16 +45,32 @@ if (@ARGV != 1) {
 my ($user, $host) = split('@', $ARGV[0]);
 ($user, $host) = ($ENV{USER}, $user) unless defined $host;
 
-my $answer=`dig -t SRV _console._tcp.$host +short +search`;
-chomp($answer);
+my $answer = dns_lookup('SRV', "_console._tcp.$host") ;
+if ($answer) {
+  my ($priority, $weight, $port, $server, @rest) = split(/\s+/, $answer);
+  $server =~ s/\.$//;
 
-die "No console SRV record found for $host\n" if $answer eq "";
+  my $cmd = "ssh $user:$port\@$server";
+  print "connecting to serial console for $host as $user\n";
+  print "exec: $cmd\n";
+  exec $cmd;
+}
 
-my ($priority, $weight, $port, $server, @rest) = split(/\s+/, $answer);
-$server =~ s/\.$//;
+my $sp_host = $host;
+$sp_host = "$host-sp" unless $host =~ /-sp$/;
 
+my $ip = dns_lookup('A', $sp_host);
+die "No serial or network management found in DNS for $host\n" unless $ip;
+$answer = dns_lookup('HINFO', $sp_host);
+$answer = dns_lookup('HINFO', $host) unless $answer;
+if ($answer and $answer =~ /\"SUN-V[24]0Z/) {
+  my $cmd = "ssh admin\@$sp_host.eng.rr.com";
+  print "connecting to service processor for $host\n";
+  print "exec: $cmd\n";
+  exec $cmd;
+}
 
-my $cmd = "ssh $user:$port\@$server";
-print "connecting to console for $host as $user\n";
+my $cmd = "ssh root\@$sp_host.eng.rr.com";
+print "connecting to service processor for $host\n";
 print "exec: $cmd\n";
 exec $cmd;
