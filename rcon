@@ -42,8 +42,14 @@ if (@ARGV != 1) {
   die "Usage: rcon [user@]<hostname>\n"
 }
 
-my ($user, $host) = split('@', $ARGV[0]);
-($user, $host) = ($ENV{USER}, $user) unless defined $host;
+my $user = 'root';
+my ($explicit_user, $host) = split('@', $ARGV[0]);
+if (defined $host) {
+  $user = $explicit_user;
+} else {
+  ($user, $host) = ($ENV{USER}, $user);
+  $explicit_user = undef;
+}
 
 my $answer = dns_lookup('SRV', "_console._tcp.$host") ;
 if ($answer) {
@@ -70,7 +76,7 @@ if ($answer and $answer =~ /\"SUN-V[24]0Z/) {
   exec $cmd;
 }
 
-my $cmd = "ssh root\@$sp_host.eng.rr.com";
+my $cmd = "ssh $user\@$sp_host.eng.rr.com";
 print "connecting to service processor for $host\n";
 print "exec: $cmd\n";
 exec $cmd;
