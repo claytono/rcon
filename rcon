@@ -47,8 +47,7 @@ my ($explicit_user, $host) = split('@', $ARGV[0]);
 if (defined $host) {
   $user = $explicit_user;
 } else {
-  ($user, $host) = ($ENV{USER}, $user);
-  $explicit_user = undef;
+  $host = $explicit_user;
 }
 
 my $answer = dns_lookup('SRV', "_console._tcp.$host") ;
